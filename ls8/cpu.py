@@ -41,7 +41,7 @@ class CPU:
         self.reg = [0] * 8
         self.pc = 0  # program counter
         self.sp = 7  # stack pointer
-        self.fl = "00000LGE"
+        self.fl = 0b00000000
         
     def ram_read(self, mar):
         print(self.reg[mar])
@@ -150,23 +150,38 @@ class CPU:
         
     def handle_CMP(self):
         # Compare the values in two registers.
+        # FL bits: 00000LGE
+        val1 = self.reg[self.ram[self.pc + 1]]
+        val2 = self.reg[self.ram[self.pc+2]]
         # If they are equal, set the Equal E flag to 1, otherwise set it to 0.
+        if val1 == val2:
+            self.fl = 0b00000001
         # If registerA is less than registerB, set the Less-than L flag to 1, otherwise set it to 0.
+        elif val1 < val2:
+            self.fl = 0b00000100
         # If registerA is greater than registerB, set the Greater-than G flag to 1, otherwise set it to 0.
-        pass
+        else:
+            self.fl = 0b00000010
+        self.pc += 3
 
     def handle_JMP(self):
         # Jump to the address stored in the given register.
         # Set the PC to the address stored in the given register.
-        pass
+        self.pc = self.reg[self.ram[self.pc+1]]
 
     def handle_JEQ(self):
         # If equal flag is set (true), jump to the address stored in the given register.
-        pass
+        if self.fl == 0b00000001:
+            self.pc = self.reg[self.ram[self.pc + 1]]
+        else:
+            self.pc += 2
 
     def handle_JNE(self):
         # If E flag is clear (false, 0), jump to the address stored in the given register.
-        pass
+        if self.fl != 0b00000001:
+            self.pc = self.reg[self.ram[self.pc + 1]]
+        else:
+            self.pc += 2
 
     def run(self):
         while True:

@@ -11,6 +11,12 @@ POP = 0b01000110
 CALL = 0b01010000
 RET = 0b00010001
 ADD = 0b10100000
+CMP = 0b10100111
+JMP = 0b01010100
+JEQ = 0b01010101
+JNE = 0b01010110
+PRA = 0b01001000
+
 class CPU:
     """Main CPU class."""
 
@@ -26,11 +32,18 @@ class CPU:
         self.branchtable[POP] = self.handle_POP
         self.branchtable[CALL] = self.handle_CALL
         self.branchtable[RET] = self.handle_RET
-
+        self.branchtable[CMP] = self.handle_CMP
+        self.branchtable[JMP] = self.handle_JMP
+        self.branchtable[JEQ] = self.handle_JEQ
+        self.branchtable[JNE] = self.handle_JNE
+        self.branchtable[PRA] = self.handle_PRA
+        
+        
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0  # program counter
         self.sp = 7  # stack pointer
+        self.fl = 0b00000000
         
     def ram_read(self, mar):
         print(self.reg[mar])
@@ -130,8 +143,6 @@ class CPU:
 
         # The PC is set to the address stored in the given register. We jump to that location in RAM and execute the first instruction in the subroutine. The PC can move forward or backwards from its current location.
         self.pc = self.reg[self.ram[self.pc+1]]
-        
-        
 
     def handle_RET(self):
         # Return from subroutine.
@@ -139,7 +150,48 @@ class CPU:
         self.pc = self.ram[self.reg[self.sp]]
         self.reg[self.sp] += 1
         
+    def handle_CMP(self):
+        # Compare the values in two registers.
+        # FL bits: 00000LGE
+        val1 = self.reg[self.ram[self.pc + 1]]
+        val2 = self.reg[self.ram[self.pc+2]]
+        # If they are equal, set the Equal E flag to 1, otherwise set it to 0.
+        if val1 == val2:
+            self.fl = 0b00000001
+        # If registerA is less than registerB, set the Less-than L flag to 1, otherwise set it to 0.
+        elif val1 < val2:
+            self.fl = 0b00000100
+        # If registerA is greater than registerB, set the Greater-than G flag to 1, otherwise set it to 0.
+        else:
+            self.fl = 0b00000010
+        self.pc += 3
 
+    def handle_JMP(self):
+        # Jump to the address stored in the given register.
+        # Set the PC to the address stored in the given register.
+        self.pc = self.reg[self.ram[self.pc+1]]
+
+    def handle_JEQ(self):
+        # If equal flag is set (true), jump to the address stored in the given register.
+        if self.fl == 0b00000001:
+            self.pc = self.reg[self.ram[self.pc + 1]]
+        else:
+            self.pc += 2
+
+    def handle_JNE(self):
+        # If E flag is clear (false, 0), jump to the address stored in the given register.
+        if self.fl != 0b00000001:
+            self.pc = self.reg[self.ram[self.pc + 1]]
+        else:
+            self.pc += 2
+    def handle_PRA(self):
+        # Print alpha character value stored in the given register.
+            print("alpha character", self.reg[self.ram[self.pc + 1]])
+
+        # Print to the console the ASCII character corresponding to the value in the register.
+            print("ASCII", chr(self.reg[self.ram[self.pc + 1]]))
+            self.pc += 2
+            
     def run(self):
         while True:
             IR = self.ram[self.pc]

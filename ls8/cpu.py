@@ -15,7 +15,7 @@ CMP = 0b10100111
 JMP = 0b01010100
 JEQ = 0b01010101
 JNE = 0b01010110
-
+PRA = 0b01001000
 
 class CPU:
     """Main CPU class."""
@@ -36,7 +36,9 @@ class CPU:
         self.branchtable[JMP] = self.handle_JMP
         self.branchtable[JEQ] = self.handle_JEQ
         self.branchtable[JNE] = self.handle_JNE
-
+        self.branchtable[PRA] = self.handle_PRA
+        
+        
         self.ram = [0] * 256
         self.reg = [0] * 8
         self.pc = 0  # program counter
@@ -182,7 +184,14 @@ class CPU:
             self.pc = self.reg[self.ram[self.pc + 1]]
         else:
             self.pc += 2
+    def handle_PRA(self):
+        # Print alpha character value stored in the given register.
+            print("alpha character", self.reg[self.ram[self.pc + 1]])
 
+        # Print to the console the ASCII character corresponding to the value in the register.
+            print("ASCII", chr(self.reg[self.ram[self.pc + 1]]))
+            self.pc += 2
+            
     def run(self):
         while True:
             IR = self.ram[self.pc]
